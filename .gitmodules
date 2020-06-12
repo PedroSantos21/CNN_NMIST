@@ -1,0 +1,3 @@
+[submodule "lib/EvolSTM"]
+	path = lib/EvolSTM
+	url = https://github.com/vicentelobo/EvoLSTM
