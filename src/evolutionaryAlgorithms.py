@@ -12,11 +12,11 @@ class GeneticAlgorithm:
         fitnessFunction,
         population_size,
         generations,
-        elitism         = 0.3,
-        crossover_rate  = 0.1,
+        elitism         = 0.1,
+        crossover_rate  = 0.2,
         crossoverPoint  = None,
         mutation_rate   = 0.25,
-        random_selection_rate = 0.05
+        random_selection_rate = 0.01
     ):
         self.elitism = elitism
         self.generations = generations
@@ -49,7 +49,8 @@ class GeneticAlgorithm:
         A probability distribution (random, gaussian, uniform) is the best way to generate
         values inside a range of possible values
         '''
-        return [round(uniform(*parameter), self.precision) if type(parameter == tuple) else choice(parameter) for parameter in self.parametersRange]
+        return [round(uniform(*parameter), 3) if type(parameter) == tuple else choice(parameter)
+            for parameter in self.parametersRange]
     
     def individualFormat(self, individual):
         return tuple(individual)
@@ -68,7 +69,7 @@ class GeneticAlgorithm:
 
     #   FITNESS SECTION
     def fitness(self, individual):
-        ind = individualFormat(individual)
+        ind = self.individualFormat(individual)
         return self.fitnessFunction(ind)
 
     def sortByFitness(self, population):
@@ -101,7 +102,7 @@ class GeneticAlgorithm:
 
 
     # GENERATIONAL SECTION
-    def evolve(self, population):
+    def evolve(self):
 
         # ELITISMO
         elitismSize = int(self.populationSize*self.elitism)
@@ -136,8 +137,8 @@ class GeneticAlgorithm:
         
         return newGeneration
 
-    def populationInfo(self):
-        orderedPop = self.sortByFitness(self.population)
+    def populationInfo(self, population):
+        orderedPop = self.sortByFitness(population)
         print("\n New population:", orderedPop)
 
         bestFitness = self.fitness(orderedPop[0])
@@ -145,14 +146,8 @@ class GeneticAlgorithm:
     
 
     def run(self):
-        
-        counter = 0
-        while counter < self.generations:
-            print(f"\n  Running iteration {(counter+1)}/{self.generations}")
-            self.population = self.evolve()
-            self.populationInfo()
-
-            counter += 1
+        self.population = self.evolve()
+        self.populationInfo(self.population)
         
         return self.sortByFitness(self.population)[0]
         

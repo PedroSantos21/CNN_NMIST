@@ -3,9 +3,7 @@ from utils import *
 from classifier import Classifier
 from evolutionaryAlgorithms import GeneticAlgorithm as GA
 
-# sys.path.insert(0, '..')
-# sys.path
-# from EvoLSTM.Lib.ga import GA
+
 from datetime import datetime
 from os import makedirs
 import traceback
@@ -65,7 +63,20 @@ def run(**kwargs):
                 'fit': evolver.fit, 
                 'history': evolver.history
             })
-        return loss, results
+        f.write(str(results))
+    
+    # Calculate stats
+    mean = np.nanmean(loss)
+    std = np.nanstd(loss)
+    
+    # Store stats         
+    with open(f"{path}/report.txt", "w+") as f:
+      f.write(f"{algorithm} - Mean: {mean} | Std: {std}\n")
+      
+    print("Success")
+    print(str(loss))
+    print(str(results))
+    
 
 
 
@@ -77,7 +88,7 @@ def main():
     CROSSOVER_RATE          = 0.8
 
     # GLOBAL CNN PARAMETERS
-    EPOCHS                  = 10
+    EPOCHS                  = 2
     BATCH_SIZE              = 256
 
 
@@ -131,8 +142,6 @@ def main():
 
         results = cnn.evaluate(test)
         return results['loss']
-
-    
 
     run(algorithm='GA', dataset='NMIST',fitness=fitness, parameters=parameters, population_size=POPULATION_SIZE, generations=GENERATIONS)
 
