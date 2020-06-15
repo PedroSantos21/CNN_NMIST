@@ -1,10 +1,11 @@
 import sys
 from utils import *
 from classifier import Classifier
+from evolutionaryAlgorithms import GeneticAlgorithm as GA
 
-sys.path.insert(0, '..')
-sys.path
-from EvoLSTM.Lib.ga import GA
+# sys.path.insert(0, '..')
+# sys.path
+# from EvoLSTM.Lib.ga import GA
 from datetime import datetime
 from os import makedirs
 import traceback
@@ -28,117 +29,43 @@ def run(**kwargs):
         popSize = kwargs.get('population_size')
         generations = kwargs.get('generations')
         history = {}
+    
+        
 
-        evolver = GA(fitness, parameters, popSize, generations, history)
+        # evolver = GA(fitness, parameters, popSize, generations, history)
+        evolver = GA(parameters=parameters, fitnessFunction=fitness, population_size=popSize, generations=generations)
     else:
         pass
             # evolver = algorithms[algorithm](fitness, parameters, popSize, num_it, normParam, history)
 
-    try:
-        # create results dir
-        timestamp = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
-        path = f"{algorithm}/results_{dataset}_{timestamp}"
-        makedirs(path)
-        imgPath = path + "/plots"
-        makedirs(imgPath)
+    # create results dir
+    timestamp = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
+    path = f"{algorithm}/results_NMIST_{timestamp}"
+    makedirs(path)
+        
+    with open(f"{path}/{algorithm}_results.txt", "w+") as f:
 
-        # get TF logger
-        log = logging.getLogger('tensorflow')
-        log.setLevel(logging.DEBUG)
-
-        # create formatter and add it to the handlers
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        # create file handler which logs even debug messages
-        fh = logging.FileHandler('tensorflow.log')
-        fh.setLevel(logging.DEBUG)
-        fh.setFormatter(formatter)
-        log.addHandler(fh)
-
+        results = []
         loss = []
-                
-        with open(f"{path}/{algorithm}_results.txt", "w+") as f:
-            results = []
-            for i in range(generations):
-                print(f"\nRunning generation {(i+1)}/{generations}")
-                # Run Evolver
-                best, hist = evolver.run()
-                # Normalize best gene
-                if algorithm != 'GA':
-                    best['gene'] = best['gene'].norm_eval()
-                print('BEST GENE', best['gene'])
-                # Calculate loss and accuracy
-                gen_loss = fitness(best['gene'], test=True)
-                
-
-                print('gen_loss', gen_loss)
-
-                loss.append(gen_loss)
-                
-                # Normalize population
-                if algorithm != 'GA':
-                    pop = [individual.norm_eval() for individual in gp.pop]
-                # Plot results
-                try:
-                    evolver.plot(hist, "save", f"{imgPath}/plot{i+1}_en.pdf")
-                except:
-                    # TODO Exception handler
-                    pass
-                # Store results
-                results.append({
-                    'best': best,
-                    'gen_loss': gen_loss,
-                    'hist': hist, 
-                    'pop': evolver.pop, 
-                    'fit': evolver.fit, 
-                    'history': evolver.history
-                })
-                f.write(str(results))
-
-        # Calculate stats
-        mean = np.nanmean(loss)
-        std = np.nanstd(loss)
-
-        # Store stats         
-        with open(f"{path}/report.txt", "w+") as f:
-            f.write(f"{algorithm} - Mean: {mean} | Std: {std}\n")
-            
-        print("Success")
-        error = False
-
-    except:
-        '''
-            Print current execution data
-        '''
-        error = traceback.format_exc()
-        print(locals()) # local variables
-        print(error, file=sys.stderr) # exception trace
-        print('{algorithm} Current Population', file=sys.stderr)
-        print([individual.norm_eval() for individual in evolver.pop], file=sys.stderr)
-        print('\n{algorithm} Current Results', file=sys.stderr)
-        print(*results[:-1], sep="\n", file=sys.stderr)
-
-    finally:
-        print("FIM")
-        sys.exit()
-        # # Store results
-        # with open(f'datasets/{dataset}_history', 'w+') as f:
-        #     f.write(str(history))
-
-        # Ask to stop and delete results if error
-        # if error:
-        #     op = input("Delete execution dir? (y/n) ")
-        #     if op != 'y' and op != 'n':
-        #         print("Invalid option")
-        #         op = input("Delete execution dir? (y/n) ")
-        #     if op == 'y':
-        #         shutil.rmtree(path)
-        #     op = input("Continue? (y/n) ")
-        #     if op != 'y' and op != 'n':
-        #         print("Invalid option")
-        #     op = input("Continue? (y/n) ")
-        #     if op == 'n':
-        #         sys.exit()
+        for i in range(generations):
+            print(f"\nRunning execution {(i+1)}/{generations}")
+            # Run Evolver
+            best = evolver.run()
+            print('BEST GENE', best['gene'])
+            # Calculate loss
+            gen_loss = evolver.fitness(best['gene'], test=True, batch_size=batch_size, epochs=epochs)
+            print('gen_loss', gen_loss)
+            loss.append(gen_loss)
+            # Store results
+            results.append({
+                'best': best,
+                'gen_loss': gen_loss,
+                'hist': hist, 
+                'pop': evolver.pop, 
+                'fit': evolver.fit, 
+                'history': evolver.history
+            })
+        return loss, results
 
 
 
@@ -195,7 +122,6 @@ def main():
         test_labels         =test_labels_cat,
         verbose             =1)
 
-    
     def fitness(individual, test=False):
         cnn.clear()
 
@@ -205,6 +131,8 @@ def main():
 
         results = cnn.evaluate(test)
         return results['loss']
+
+    
 
     run(algorithm='GA', dataset='NMIST',fitness=fitness, parameters=parameters, population_size=POPULATION_SIZE, generations=GENERATIONS)
 
