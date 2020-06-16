@@ -22,65 +22,69 @@ def run(**kwargs):
     dataset = kwargs.get('dataset')
 
     if kwargs.get('algorithm') == 'GA':
-        fitness = kwargs.get('fitness')
         parameters = kwargs.get('parameters')
         popSize = kwargs.get('population_size')
         generations = kwargs.get('generations')
-        history = {}
-    
-        
 
         # evolver = GA(fitness, parameters, popSize, generations, history)
         evolver = GA(parameters=parameters, fitnessFunction=fitness, population_size=popSize, generations=generations)
     else:
         pass
-            # evolver = algorithms[algorithm](fitness, parameters, popSize, num_it, normParam, history)
+    best = evolver.run()
+    print("Best Solution after "+generations+" generations...")
+    print(str(best))
 
-    # create results dir
-    timestamp = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
-    path = f"{algorithm}/results_NMIST_{timestamp}"
-    makedirs(path)
+    # # create results dir
+    # timestamp = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
+    # path = f"{algorithm}/results_NMIST_{timestamp}"
+    # makedirs(path)
         
-    with open(f"{path}/{algorithm}_results.txt", "w+") as f:
+    # with open(f"{path}/{algorithm}_results.txt", "w+") as f:
 
-        results = []
-        loss = []
-        for i in range(generations):
-            print(f"\nRunning execution {(i+1)}/{generations}")
-            # Run Evolver
-            best = evolver.run()
-            print('BEST GENE', best['gene'])
-            # Calculate loss
-            gen_loss = evolver.fitness(best['gene'], test=True, batch_size=batch_size, epochs=epochs)
-            print('gen_loss', gen_loss)
-            loss.append(gen_loss)
-            # Store results
-            results.append({
-                'best': best,
-                'gen_loss': gen_loss,
-                'hist': hist, 
-                'pop': evolver.pop, 
-                'fit': evolver.fit, 
-                'history': evolver.history
-            })
-        f.write(str(results))
+    #     results = []
+    #     loss = []
+
+
+    #     for i in range(generations):
+    #         print(f"\nRunning execution {(i+1)}/{generations}")
+    #         # Run Evolver
+    #         print('BEST GENE', best['gene'])
+    #         # Calculate loss
+    #         gen_loss = evolver.fitness(best['gene'], test=True, batch_size=batch_size, epochs=epochs)
+    #         print('gen_loss', gen_loss)
+    #         loss.append(gen_loss)
+    #         # Store results
+    #         results.append({
+    #             'best': best,
+    #             'gen_loss': gen_loss,
+    #             'hist': hist, 
+    #             'pop': evolver.pop, 
+    #             'fit': evolver.fit, 
+    #             'history': evolver.history
+    #         })
+    #     f.write(str(results))
     
-    # Calculate stats
-    mean = np.nanmean(loss)
-    std = np.nanstd(loss)
+    # # Calculate stats
+    # mean = np.nanmean(loss)
+    # std = np.nanstd(loss)
     
-    # Store stats         
-    with open(f"{path}/report.txt", "w+") as f:
-      f.write(f"{algorithm} - Mean: {mean} | Std: {std}\n")
+    # # Store stats         
+    # with open(f"{path}/report.txt", "w+") as f:
+    #   f.write(f"{algorithm} - Mean: {mean} | Std: {std}\n")
       
-    print("Success")
-    print(str(loss))
-    print(str(results))
+    # print("Success")
+    # print(str(loss))
+    # print(str(results))
     
 
 
 
 def main():
+    pass
+
+
+if __name__ == '__main__':
+
     # GLOBAL GA PARAMETERS  
     GENERATIONS             = 2
     POPULATION_SIZE         = 4
@@ -92,7 +96,7 @@ def main():
     BATCH_SIZE              = 256
 
 
-        # Hiperparametros:
+    # Hiperparametros:
     # - Learning rate
     # - Funcao de otimizacao
     # - Tamanho camada 1
@@ -144,15 +148,6 @@ def main():
         return results['loss']
 
     run(algorithm='GA', dataset='NMIST',fitness=fitness, parameters=parameters, population_size=POPULATION_SIZE, generations=GENERATIONS)
-
-
-
-
-
-
-
-if __name__ == '__main__':
-    main()
 
     
 

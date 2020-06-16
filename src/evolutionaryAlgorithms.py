@@ -1,5 +1,5 @@
 import numpy as np
-from random import random, randint, uniform, choice, choices
+from random import random, randint, uniform, choice, choices, sample
 from tqdm import tqdm
 from time import time
 import sys
@@ -13,7 +13,7 @@ class GeneticAlgorithm:
         population_size,
         generations,
         elitism         = 0.1,
-        crossover_rate  = 0.2,
+        crossover_rate  = 0.8,
         crossoverPoint  = None,
         mutation_rate   = 0.25,
         random_selection_rate = 0.01
@@ -34,7 +34,7 @@ class GeneticAlgorithm:
         # AUX
         self.precision = 7
 
-        self.population = self.createPopulation()
+        # self.population = self.createPopulation()
     
 
     # POPULATIONAL SECTION
@@ -60,6 +60,7 @@ class GeneticAlgorithm:
         Create an initial random population according with the
         parameters of the problem and its valid values
         '''
+        print("Creating initial random population...")
         population = []
         while len(population) < self.populationSize:
             ind = self.createIndividual()
@@ -69,13 +70,34 @@ class GeneticAlgorithm:
 
     #   FITNESS SECTION
     def fitness(self, individual):
+        '''
+        function fitness = evaluate_individual
+        '''
         ind = self.individualFormat(individual)
         return self.fitnessFunction(ind)
 
+
     def sortByFitness(self, population):
-        scores = [self.fitness(individual) for individual in population]
+        scores = [self.fitness(individual) for individual in tqdm(population, desc="Measuring Population Fitness", file=sys.stdout)]
         return [x for _, x in sorted(zip(scores, population), key=lambda p: p[0], reverse=True)]
 
+    def populationFitness(self, population):
+        return [self.fitness(individual) for individual in tqdm(population, desc="Measuring Population Fitness", file=sys.stdout)]    
+    
+    def orderPopulation(self, scores, population):
+        self.scores, self.population = [list(t) for t in zip(*sorted(zip(scores, population)))]   
+
+
+    def grade(self, list_fit=None):
+        '''
+        Find minimum fitness for a population.
+        '''
+        if not list_fit:
+            list_fit = self.scores
+        try:
+            return np.nanmin([fit for fit in self.scores])
+        except:
+            return np.nan
     
     # REPRODUCTION SECTION
     def crossover(self, individual1, individual2):
@@ -84,10 +106,8 @@ class GeneticAlgorithm:
         child2 = individual2.copy()
 
         if np.random.uniform(0,1) < self.crossoverRate:
-
-            child1[self.crossoverPoint:] = child1[self.crossoverPoint:] + child2[self.crossoverPoint:]
-            child2[self.crossoverPoint:] = child1[self.crossoverPoint:] - child2[self.crossoverPoint:]
-            child1[self.crossoverPoint:] = child1[self.crossoverPoint:] - child2[self.crossoverPoint:]
+            child1 = individual1[:self.crossoverPoint] + individual2[self.crossoverPoint:]
+            child2 = individual2[:self.crossoverPoint] + individual1[self.crossoverPoint:]
 
         return child1, child2
 
@@ -106,23 +126,23 @@ class GeneticAlgorithm:
 
         # ELITISMO
         elitismSize = int(self.populationSize*self.elitism)
-        orderedPop = self.sortByFitness(self.population)
-        newGeneration = [ind for ind in tqdm(orderedPop[:elitismSize], desc=" Applying Elitism", file=sys.stdout)]
+        # orderedPop = self.sortByFitness(population)
+        newGeneration = [ind for ind in tqdm(self.population[:elitismSize], desc="Applying Elitism", file=sys.stdout)]
 
         while len(newGeneration) < self.populationSize:
             
             # RANDOM SELECTION (DIVERSITY)
-            for individual in tqdm(orderedPop[elitismSize:], desc="    Random Selection", file=sys.stdout):
+            for individual in tqdm(self.population[elitismSize:], desc="Random Selection", file=sys.stdout):
                 if np.random.uniform(0,1) < self.randoSelectionRate:
                     newGeneration.append(individual)
         
             # RANDOM MUTATION (DIVERSITY)
-            for individual in tqdm(orderedPop[elitismSize:], desc="    Random Mutation", file=sys.stdout):
+            for individual in tqdm(self.population[elitismSize:], desc="Random Mutation", file=sys.stdout):
                 self.mutation(individual)
                 newGeneration.append(individual)
 
             # CROSSOVER
-            ind1, ind2 = choices(self.population,k=2)
+            ind1, ind2 = sample(self.population, 2)
 
             child1, child2 = self.crossover(ind1, ind2)
 
@@ -133,23 +153,43 @@ class GeneticAlgorithm:
             newGeneration.append(child1)
             newGeneration.append(child2)
 
-        self.populationInfo(newGeneration)
+        # EVALUATE POPULATION
+        generationScores = self.populationFitness(newGeneration)
+        generationbestFitness = self.grade(generationScores) 
+
+        print("Best fitness of this generation:", generationbestFitness)
+
+        self.orderPopulation(generationScores, newGeneration)
+        self.bestFitness = generationbestFitness
+
         
-        return newGeneration
 
     def populationInfo(self, population):
-        orderedPop = self.sortByFitness(population)
-        print("\n New population:", orderedPop)
-
-        bestFitness = self.fitness(orderedPop[0])
-        print("    Best fitness of this generation:", bestFitness)
-    
+        pass
+        
 
     def run(self):
-        self.population = self.evolve()
-        self.populationInfo(self.population)
         
-        return self.sortByFitness(self.population)[0]
+        counter = 0
+        # CREATE INITIAL RANDOM POPULATION
+        self.population = self.createPopulation()
+
+        # EVALUATE INITIAL POPULATION
+        self.scores = self.populationFitness(self.population)
+        self.bestFitness = self.grade() 
+        print("Initial best fitness:", self.bestFitness)
+        
+        # ORGANIZING POPULATION BY FITNESS
+        self.orderPopulation(self.scores, self.population)
+        
+        while counter < self.generations:
+            print(f"\n  Running iteration {(counter+1)}/{self.generations}")
+
+            self.evolve()
+
+            counter += 1
+        
+        return self.bestFitness
         
 
     
