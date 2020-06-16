@@ -189,7 +189,7 @@ class GeneticAlgorithm:
 
             counter += 1
         
-        return self.bestFitness
+        return self.bestFitness, sef.Population
         
 
     

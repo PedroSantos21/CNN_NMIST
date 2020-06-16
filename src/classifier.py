@@ -29,6 +29,7 @@ class Classifier:
    
 
   def fit(self, test=False, batchSize=64, nbEpochs=10):
+    print("Training model...")
     if not test:
       self.model.fit(self.train_digits, 
                     self.train_labels, 
@@ -52,6 +53,7 @@ class Classifier:
 
     
   def evaluate(self, test=False, batchSize=64):
+    print("Evaluating model...")
     if not test:
       scores = self.model.evaluate(self.validation_digits, self.validation_labels, batch_size=batchSize, verbose=self.verbose)
     else:

@@ -26,55 +26,21 @@ def run(**kwargs):
         popSize = kwargs.get('population_size')
         generations = kwargs.get('generations')
 
-        # evolver = GA(fitness, parameters, popSize, generations, history)
         evolver = GA(parameters=parameters, fitnessFunction=fitness, population_size=popSize, generations=generations)
     else:
         pass
-    best = evolver.run()
-    print("Best Solution after "+generations+" generations...")
-    print(str(best))
 
-    # # create results dir
-    # timestamp = datetime.now().strftime('%d-%m-%Y_%H-%M-%S')
-    # path = f"{algorithm}/results_NMIST_{timestamp}"
-    # makedirs(path)
-        
-    # with open(f"{path}/{algorithm}_results.txt", "w+") as f:
-
-    #     results = []
-    #     loss = []
-
-
-    #     for i in range(generations):
-    #         print(f"\nRunning execution {(i+1)}/{generations}")
-    #         # Run Evolver
-    #         print('BEST GENE', best['gene'])
-    #         # Calculate loss
-    #         gen_loss = evolver.fitness(best['gene'], test=True, batch_size=batch_size, epochs=epochs)
-    #         print('gen_loss', gen_loss)
-    #         loss.append(gen_loss)
-    #         # Store results
-    #         results.append({
-    #             'best': best,
-    #             'gen_loss': gen_loss,
-    #             'hist': hist, 
-    #             'pop': evolver.pop, 
-    #             'fit': evolver.fit, 
-    #             'history': evolver.history
-    #         })
-    #     f.write(str(results))
-    
-    # # Calculate stats
-    # mean = np.nanmean(loss)
-    # std = np.nanstd(loss)
-    
-    # # Store stats         
-    # with open(f"{path}/report.txt", "w+") as f:
-    #   f.write(f"{algorithm} - Mean: {mean} | Std: {std}\n")
-      
-    # print("Success")
-    # print(str(loss))
-    # print(str(results))
+    best, population = evolver.run()
+    print("Best Solution after "+str(generations)+" generations...")
+    print(
+        "Learning Rate: "+str(population[0][0]) +
+        "\n Optimizer: " + str(population[0][1]) +
+        "\n Layer 1 Size: "+str(population[0][2]) +
+        "\n Layer 2 Size: " +str(population[0][3]) +
+        "\n Layer 3 Size: " +str(population[0][4])
+    )
+    print("Fitness (loss)" +str(best))
+  
     
 
 
